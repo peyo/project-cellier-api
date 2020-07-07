@@ -2,7 +2,9 @@ const xss = require("xss");
 
 const CommentsService = {
   getAllComments(db) {
-    return db.from("comments").select("*");
+    return db
+      .from("comments")
+      .select("*");
   },
   getById(db, id) {
     return db

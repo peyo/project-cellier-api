@@ -3,6 +3,7 @@ const app = require("../src/app");
 const TestScents = require("./data/test-scents");
 const TestComments = require("./data/test-comments");
 const TestGroups = require("./data/test-groups");
+const TestUsers = require("./data/test-users");
 const supertest = require("supertest");
 const { expect } = require("chai");
 
@@ -18,11 +19,11 @@ describe(`Comments endpoints`, function () {
   });
 
   before(() => {
-    return db.raw("TRUNCATE TABLE groups, scents, comments CASCADE");
+    return db.raw("TRUNCATE TABLE users, groups, scents, comments RESTART IDENTITY CASCADE");
   });
 
   afterEach(() => {
-    return db.raw("TRUNCATE TABLE groups, scents, comments CASCADE");
+    return db.raw("TRUNCATE TABLE users, groups, scents, comments RESTART IDENTITY CASCADE");
   });
 
   after(() => {
@@ -30,6 +31,10 @@ describe(`Comments endpoints`, function () {
   });
 
   context(`Given "comments" has data.`, () => {
+    beforeEach(() => {
+      return db.into("users").insert(TestUsers);
+    });
+    
     beforeEach(() => {
       return db.into("groups").insert(TestGroups);
     });
@@ -43,9 +48,7 @@ describe(`Comments endpoints`, function () {
     });
 
     it(`GET /api/comments responds with 200 and all the comments`, () => {
-      return supertest(app)
-        .get("/api/comments")
-        .expect(200, TestComments);
+      return supertest(app).get("/api/comments").expect(200, TestComments);
     });
 
     it(`GET /api/comments/:id responds with 200 and the specified comment`, () => {
@@ -56,11 +59,13 @@ describe(`Comments endpoints`, function () {
         .expect(200, JSON.stringify(expected));
     });
 
+    // POST is working in Postman but not working as a test. Pretty curious scenario.
     it(`POST /api/comments creates a comment, responding with 201 and the new comment`, () => {
       this.retries(3);
       const newComment = {
         scents_id: 1,
         comment: "Enriching...",
+        users_id: 3,
         date_created: new Date(),
         date_edited: new Date(),
       };
@@ -72,6 +77,7 @@ describe(`Comments endpoints`, function () {
         .expect((res) => {
           expect(res.body.scents_id).to.eql(newComment.scents_id);
           expect(res.body.comment).to.eql(newComment.comment);
+          expect(res.body.users_id).to.eql(newComment.users_id);
 
           const actualDate = new Date(res.body.date_created).toLocaleString();
           const expectedDate = new Date().toLocaleString();

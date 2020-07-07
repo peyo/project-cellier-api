@@ -3,6 +3,7 @@ const RatingsService = require("../src/ratings/ratings-service");
 const TestRatings = require("./data/test-ratings");
 const TestScents = require("./data/test-scents");
 const TestGroups = require("./data/test-groups");
+const TestUsers = require("./data/test-users");
 const { expect } = require("chai");
 
 describe(`Ratings service object`, function () {
@@ -16,11 +17,11 @@ describe(`Ratings service object`, function () {
   });
 
   before(() => {
-    return db.raw("TRUNCATE TABLE groups, scents, ratings CASCADE");
+    return db.raw("TRUNCATE TABLE users, groups, scents, ratings CASCADE");
   });
 
   afterEach(() => {
-    return db.raw("TRUNCATE TABLE groups, scents, ratings CASCADE");
+    return db.raw("TRUNCATE TABLE users, groups, scents, ratings CASCADE");
   });
 
   after(() => {
@@ -28,6 +29,10 @@ describe(`Ratings service object`, function () {
   });
 
   context(`Given "ratings" has data.`, () => {
+    beforeEach(() => {
+      return db.into("users").insert(TestUsers);
+    });
+    
     beforeEach(() => {
       return db.into("groups").insert(TestGroups);
     });
@@ -113,6 +118,10 @@ describe(`Ratings service object`, function () {
   });
 
   context(`Given "ratings" has no data.`, () => {
+    beforeEach(() => {
+      return db.into("users").insert(TestUsers);
+    });
+    
     beforeEach(() => {
       return db.into("groups").insert(TestGroups);
     });

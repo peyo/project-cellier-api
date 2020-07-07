@@ -33,7 +33,7 @@ CommentsRouter.route("/")
         res
           .status(201)
           .location(path.posix.join(req.originalUrl + `/${comment.id}`))
-          .json(comment);
+          .json(CommentsService.serializeComment(comment));
       })
       .catch(next);
   });

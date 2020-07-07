@@ -3,6 +3,7 @@ const app = require("../src/app");
 const TestScents = require("./data/test-scents");
 const TestRatings = require("./data/test-ratings");
 const TestGroups = require("./data/test-groups");
+const TestUsers = require("./data/test-users");
 const supertest = require("supertest");
 
 describe(`Scents endpoints`, function () {
@@ -17,11 +18,11 @@ describe(`Scents endpoints`, function () {
   });
 
   before(() => {
-    return db.raw("TRUNCATE TABLE groups, scents, comments, ratings CASCADE");
+    return db.raw("TRUNCATE TABLE users, groups, scents, comments, ratings CASCADE");
   });
 
   afterEach(() => {
-    return db.raw("TRUNCATE TABLE groups, scents, comments, ratings CASCADE");
+    return db.raw("TRUNCATE TABLE users, groups, scents, comments, ratings CASCADE");
   });
 
   after(() => {
@@ -29,6 +30,10 @@ describe(`Scents endpoints`, function () {
   });
 
   context(`Given "scents" has data.`, () => {
+    beforeEach(() => {
+      return db.into("users").insert(TestUsers);
+    });
+    
     beforeEach(() => {
       return db.into("groups").insert(TestGroups);
     });

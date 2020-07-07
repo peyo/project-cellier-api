@@ -3,6 +3,7 @@ const ScentsService = require("../src/scents/scents-service");
 const TestScents = require("./data/test-scents");
 const TestRatings = require("./data/test-ratings");
 const TestGroups = require("./data/test-groups");
+const TestUsers = require("./data/test-users");
 const { expect } = require("chai");
 
 describe(`Scents service object`, function () {
@@ -16,11 +17,11 @@ describe(`Scents service object`, function () {
   });
 
   before(() => {
-    return db.raw("TRUNCATE TABLE groups, scents, comments, ratings CASCADE");
+    return db.raw("TRUNCATE TABLE users, groups, scents, comments, ratings CASCADE");
   });
 
   afterEach(() => {
-    return db.raw("TRUNCATE TABLE groups, scents, comments, ratings CASCADE");
+    return db.raw("TRUNCATE TABLE users, groups, scents, comments, ratings CASCADE");
   });
 
   after(() => {
@@ -28,6 +29,10 @@ describe(`Scents service object`, function () {
   });
 
   context(`Given "scents" has data.`, () => {
+    beforeEach(() => {
+      return db.into("users").insert(TestUsers);
+    });
+    
     beforeEach(() => {
       return db.into("groups").insert(TestGroups);
     });

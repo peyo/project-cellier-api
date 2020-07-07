@@ -3,6 +3,7 @@ const app = require("../src/app");
 const TestScents = require("./data/test-scents");
 const TestRatings = require("./data/test-ratings");
 const TestGroups = require("./data/test-groups");
+const TestUsers = require("./data/test-users");
 const supertest = require("supertest");
 const { expect } = require("chai");
 
@@ -18,11 +19,11 @@ describe(`Ratings endpoints`, function () {
   });
 
   before(() => {
-    return db.raw("TRUNCATE TABLE groups, scents, ratings CASCADE");
+    return db.raw("TRUNCATE TABLE users, groups, scents, ratings RESTART IDENTITY CASCADE");
   });
 
   afterEach(() => {
-    return db.raw("TRUNCATE TABLE groups, scents, ratings CASCADE");
+    return db.raw("TRUNCATE TABLE users, groups, scents, ratings RESTART IDENTITY CASCADE");
   });
 
   after(() => {
@@ -30,6 +31,10 @@ describe(`Ratings endpoints`, function () {
   });
 
   context(`Given "ratings" has data.`, () => {
+    beforeEach(() => {
+      return db.into("users").insert(TestUsers);
+    });
+    
     beforeEach(() => {
       return db.into("groups").insert(TestGroups);
     });
@@ -61,6 +66,7 @@ describe(`Ratings endpoints`, function () {
       const newRating = {
         scents_id: 1,
         rating: 1,
+        users_id: 3,
         date_created: new Date(),
         date_edited: new Date(),
       };
@@ -72,6 +78,7 @@ describe(`Ratings endpoints`, function () {
         .expect((res) => {
           expect(res.body.scents_id).to.eql(newRating.scents_id);
           expect(res.body.rating).to.eql(newRating.rating);
+          expect(res.body.users_id).to.eql(newRating.users_id);
 
           const actualDate = new Date(res.body.date_created).toLocaleString();
           const expectedDate = new Date().toLocaleString();

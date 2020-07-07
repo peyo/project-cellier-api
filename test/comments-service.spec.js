@@ -3,6 +3,7 @@ const CommentsService = require("../src/comments/comments-service");
 const TestComments = require("./data/test-comments");
 const TestScents = require("./data/test-scents");
 const TestGroups = require("./data/test-groups");
+const TestUsers = require("./data/test-users");
 const { expect } = require("chai");
 
 describe(`Comments service object`, function () {
@@ -16,13 +17,13 @@ describe(`Comments service object`, function () {
   });
 
   before(() => {
-    return db.raw("TRUNCATE TABLE groups, scents, comments CASCADE");
+    return db.raw("TRUNCATE TABLE users, groups, scents, comments CASCADE");
   });
 
   before(() => db('comments').truncate())
 
   afterEach(() => {
-    return db.raw("TRUNCATE TABLE groups, scents, comments CASCADE");
+    return db.raw("TRUNCATE TABLE users, groups, scents, comments CASCADE");
   });
 
   afterEach(() => db('comments').truncate())
@@ -32,6 +33,10 @@ describe(`Comments service object`, function () {
   });
 
   context(`Given "comments" has data.`, () => {
+    beforeEach(() => {
+      return db.into("users").insert(TestUsers);
+    });
+    
     beforeEach(() => {
       return db.into("groups").insert(TestGroups);
     });
@@ -127,6 +132,10 @@ describe(`Comments service object`, function () {
   });
 
   context(`Given "comments" has no data.`, () => {
+    beforeEach(() => {
+      return db.into("users").insert(TestUsers);
+    });
+
     beforeEach(() => {
       return db.into("groups").insert(TestGroups);
     });

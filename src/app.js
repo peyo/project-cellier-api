@@ -7,7 +7,7 @@ const { NODE_ENV } = require("./config");
 const ScentsRouter = require("./scents/scents-router");
 const GroupsRouter = require("./groups/groups-router");
 const CommentsRouter = require("./comments/comments-router");
-const RatingsRouter = require("./ratings/Ratings-router");
+const RatingsRouter = require("./ratings/ratings-router");
 
 const app = express();
 const morganOption = NODE_ENV === "production" ? "tiny" : "common";
