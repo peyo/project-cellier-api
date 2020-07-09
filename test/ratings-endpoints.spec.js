@@ -4,11 +4,12 @@ const TestScents = require("./data/test-scents");
 const TestRatings = require("./data/test-ratings");
 const TestGroups = require("./data/test-groups");
 const TestUsers = require("./data/test-users");
+const TestComments = require("./data/test-comments");
 const supertest = require("supertest");
 const { expect } = require("chai");
 const helpers = require("./test-helpers/test-helpers");
 
-describe(`Ratings endpoints`, function () {
+describe.only(`Ratings endpoints`, function () {
   let db;
 
   before(() => {
@@ -19,17 +20,9 @@ describe(`Ratings endpoints`, function () {
     app.set("db", db);
   });
 
-  before(() => {
-    return db.raw(
-      "TRUNCATE TABLE users, groups, scents, ratings RESTART IDENTITY CASCADE"
-    );
-  });
+  before("cleanup", () => helpers.cleanTables(db));
 
-  afterEach(() => {
-    return db.raw(
-      "TRUNCATE TABLE users, groups, scents, ratings RESTART IDENTITY CASCADE"
-    );
-  });
+  afterEach("cleanup", () => helpers.cleanTables(db));
 
   after(() => {
     return db.destroy();
@@ -212,24 +205,29 @@ describe(`Ratings endpoints`, function () {
     });
 
     beforeEach(() => {
+      return db.into("comments").insert(TestComments);
+    });
+
+    beforeEach(() => {
       return db.into("ratings").insert(TestRatings);
     });
 
-    it(`POST /api/ratings responds with 401 "Missing basic token" when no basic token is used`, () => {
+    it(`POST /api/ratings responds with 401 "Missing bearer token" when no bearer token is used`, () => {
       return supertest(app)
         .post(`/api/ratings`)
         .expect(401, {
           error: {
-            message: `Missing basic token.`,
+            message: `Missing bearer token.`,
           },
         });
     });
 
     it(`POST /api/ratings responds 401 "Unauthorized request" when no credentials in token`, () => {
-      const userNoCreds = { user_name: "", password: "" };
+      const validUser = TestUsers[0];
+      const invalidSecret = "bad-secret";
       return supertest(app)
         .post(`/api/ratings`)
-        .set("Authorization", helpers.makeAuthHeader(userNoCreds))
+        .set("Authorization", helpers.makeAuthHeader(validUser, invalidSecret))
         .expect(401, {
           error: {
             message: `Unauthorized request.`,
@@ -237,11 +235,11 @@ describe(`Ratings endpoints`, function () {
         });
     });
 
-    it(`POST /api/ratings responds 401 "Unauthorized request" when invalid user`, () => {
-      const userInvalidCreds = { username: "user-not", password: "exist" };
+    it(`POST /api/ratings responds 401 "Unauthorized request" when invalid sub in payload`, () => {
+      const invalidUser = { user_name: "user-not-existy", id: 1 };
       return supertest(app)
         .post(`/api/ratings`)
-        .set("Authorization", helpers.makeAuthHeader(userInvalidCreds))
+        .set("Authorization", helpers.makeAuthHeader(invalidUser))
         .expect(401, {
           error: {
             message: `Unauthorized request.`,
@@ -249,36 +247,22 @@ describe(`Ratings endpoints`, function () {
         });
     });
 
-    it(`POST /api/ratings responds 401 "Unauthorized request" when invalid password`, () => {
-      const userInvalidPass = {
-        username: TestUsers[0].username,
-        password: "wrong",
-      };
-      return supertest(app)
-        .post(`/api/ratings`)
-        .set("Authorization", helpers.makeAuthHeader(userInvalidPass))
-        .expect(401, {
-          error: {
-            message: `Unauthorized request.`,
-          },
-        });
-    });
-
-    it(`PATCH /api/ratings/:id responds with 401 "Missing basic token" when no basic token is used`, () => {
+    it(`PATCH /api/ratings/:id responds with 401 "Missing bearer token" when no bearer token is used`, () => {
       return supertest(app)
         .patch(`/api/ratings/1`)
         .expect(401, {
           error: {
-            message: `Missing basic token.`,
+            message: `Missing bearer token.`,
           },
         });
     });
 
     it(`PATCH /api/ratings/:id responds 401 "Unauthorized request" when no credentials in token`, () => {
-      const userNoCreds = { user_name: "", password: "" };
+      const validUser = TestUsers[0];
+      const invalidSecret = "bad-secret";
       return supertest(app)
         .patch(`/api/ratings/1`)
-        .set("Authorization", helpers.makeAuthHeader(userNoCreds))
+        .set("Authorization", helpers.makeAuthHeader(validUser, invalidSecret))
         .expect(401, {
           error: {
             message: `Unauthorized request.`,
@@ -286,26 +270,11 @@ describe(`Ratings endpoints`, function () {
         });
     });
 
-    it(`PATCH /api/ratings/:id responds 401 "Unauthorized request" when invalid user`, () => {
-      const userInvalidCreds = { username: "user-not", password: "exist" };
+    it(`PATCH /api/ratings/:id responds 401 "Unauthorized request" when invalid sub in payload`, () => {
+      const invalidUser = { user_name: "user-not-existy", id: 1 };
       return supertest(app)
         .patch(`/api/ratings/1`)
-        .set("Authorization", helpers.makeAuthHeader(userInvalidCreds))
-        .expect(401, {
-          error: {
-            message: `Unauthorized request.`,
-          },
-        });
-    });
-
-    it(`PATCH /api/ratings/:id responds 401 "Unauthorized request" when invalid password`, () => {
-      const userInvalidPass = {
-        username: TestUsers[0].username,
-        password: "wrong",
-      };
-      return supertest(app)
-        .patch(`/api/ratings/1`)
-        .set("Authorization", helpers.makeAuthHeader(userInvalidPass))
+        .set("Authorization", helpers.makeAuthHeader(invalidUser))
         .expect(401, {
           error: {
             message: `Unauthorized request.`,

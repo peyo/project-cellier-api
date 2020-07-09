@@ -3,7 +3,7 @@ const RatingsService = require("./ratings-service");
 const RatingsRouter = express.Router();
 const jsonParser = express.json();
 const path = require("path");
-const { requireAuth } = require("../middleware/basic-auth");
+const { requireAuth } = require("../middleware/jwt-auth");
 
 RatingsRouter.route("/")
   .get((req, res, next) => {
@@ -27,7 +27,7 @@ RatingsRouter.route("/")
           },
         });
 
-    newRating.users_id = req.users_id;
+    newRating.users_id = req.users.id;
     newRating.date_created = date_created;
 
     RatingsService.insertRating(knexInstance, newRating)
@@ -81,6 +81,8 @@ RatingsRouter.route("/:id")
         },
       });
     }
+
+    newRating.users_id = req.users.id;
 
     RatingsService.updateRating(knexInstance, req.params.id, ratingToUpdate)
       .then(() => {

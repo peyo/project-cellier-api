@@ -4,11 +4,12 @@ const TestScents = require("./data/test-scents");
 const TestComments = require("./data/test-comments");
 const TestGroups = require("./data/test-groups");
 const TestUsers = require("./data/test-users");
+const TestRatings = require("./data/test-ratings");
 const supertest = require("supertest");
 const { expect } = require("chai");
 const helpers = require("./test-helpers/test-helpers");
 
-describe(`Comments endpoints`, function () {
+describe.only(`Comments endpoints`, function () {
   let db;
 
   before(() => {
@@ -19,17 +20,9 @@ describe(`Comments endpoints`, function () {
     app.set("db", db);
   });
 
-  before(() => {
-    return db.raw(
-      "TRUNCATE TABLE users, groups, scents, comments RESTART IDENTITY CASCADE"
-    );
-  });
+  before("cleanup", () => helpers.cleanTables(db));
 
-  afterEach(() => {
-    return db.raw(
-      "TRUNCATE TABLE users, groups, scents, comments RESTART IDENTITY CASCADE"
-    );
-  });
+  afterEach("cleanup", () => helpers.cleanTables(db));
 
   after(() => {
     return db.destroy();
@@ -46,6 +39,10 @@ describe(`Comments endpoints`, function () {
 
     beforeEach(() => {
       return db.into("scents").insert(TestScents);
+    });
+
+    beforeEach(() => {
+      return db.into("ratings").insert(TestRatings);
     });
 
     beforeEach(() => {
@@ -117,7 +114,10 @@ describe(`Comments endpoints`, function () {
               expect(row.comment).to.eql(newComment.comment);
               expect(row.users_id).to.eql(TestUser.users_id);
 
-              const actualDate = new Date(row.date_created).toLocaleString('en', { timeZone: 'UTC' });
+              const actualDate = new Date(row.date_created).toLocaleString(
+                "en",
+                { timeZone: "UTC" }
+              );
               const expectedDate = new Date().toLocaleString();
               expect(actualDate).to.eql(expectedDate);
             })
@@ -248,21 +248,22 @@ describe(`Comments endpoints`, function () {
       return db.into("comments").insert(TestComments);
     });
 
-    it(`POST /api/comments responds with 401 "Missing basic token" when no basic token is used`, () => {
+    it(`POST /api/comments responds with 401 "Missing bearer token" when no bearer token is used`, () => {
       return supertest(app)
         .post(`/api/comments`)
         .expect(401, {
           error: {
-            message: `Missing basic token.`,
+            message: `Missing bearer token.`,
           },
         });
     });
 
-    it(`POST /api/comments responds 401 "Unauthorized request" when no credentials in token`, () => {
-      const userNoCreds = { user_name: "", password: "" };
+    it(`POST /api/comments responds 401 "Unauthorized request" when invalid JWT secret`, () => {
+      const validUser = TestUsers[0];
+      const invalidSecret = "bad-secret";
       return supertest(app)
         .post(`/api/comments`)
-        .set("Authorization", helpers.makeAuthHeader(userNoCreds))
+        .set("Authorization", helpers.makeAuthHeader(validUser, invalidSecret))
         .expect(401, {
           error: {
             message: `Unauthorized request.`,
@@ -270,11 +271,11 @@ describe(`Comments endpoints`, function () {
         });
     });
 
-    it(`POST /api/comments responds 401 "Unauthorized request" when invalid user`, () => {
-      const userInvalidCreds = { username: "user-not", password: "exist" };
+    it(`POST /api/comments responds 401 "Unauthorized request" when invalid sub in payload`, () => {
+      const invalidUser = { user_name: "user-not-existy", id: 1 };
       return supertest(app)
         .post(`/api/comments`)
-        .set("Authorization", helpers.makeAuthHeader(userInvalidCreds))
+        .set("Authorization", helpers.makeAuthHeader(invalidUser))
         .expect(401, {
           error: {
             message: `Unauthorized request.`,
@@ -282,36 +283,22 @@ describe(`Comments endpoints`, function () {
         });
     });
 
-    it(`POST /api/comments responds 401 "Unauthorized request" when invalid password`, () => {
-      const userInvalidPass = {
-        username: TestUsers[0].username,
-        password: "wrong",
-      };
-      return supertest(app)
-        .post(`/api/comments`)
-        .set("Authorization", helpers.makeAuthHeader(userInvalidPass))
-        .expect(401, {
-          error: {
-            message: `Unauthorized request.`,
-          },
-        });
-    });
-
-    it(`DELETE /api/comments/:id responds with 401 "Missing basic token" when no basic token is used`, () => {
+    it(`DELETE /api/comments/:id responds with 401 "Missing bearer token" when no bearer token is used`, () => {
       return supertest(app)
         .delete(`/api/comments/1`)
         .expect(401, {
           error: {
-            message: `Missing basic token.`,
+            message: `Missing bearer token.`,
           },
         });
     });
 
-    it(`DELETE /api/comments/:id responds 401 "Unauthorized request" when no credentials in token`, () => {
-      const userNoCreds = { user_name: "", password: "" };
+    it(`DELETE /api/comments/:id responds 401 "Unauthorized request" when invalid JWT secret`, () => {
+      const validUser = TestUsers[0];
+      const invalidSecret = "bad-secret";
       return supertest(app)
         .delete(`/api/comments/1`)
-        .set("Authorization", helpers.makeAuthHeader(userNoCreds))
+        .set("Authorization", helpers.makeAuthHeader(validUser, invalidSecret))
         .expect(401, {
           error: {
             message: `Unauthorized request.`,
@@ -319,11 +306,11 @@ describe(`Comments endpoints`, function () {
         });
     });
 
-    it(`DELETE /api/comments/:id responds 401 "Unauthorized request" when invalid user`, () => {
-      const userInvalidCreds = { username: "user-not", password: "exist" };
+    it(`DELETE /api/comments/:id responds 401 "Unauthorized request" when invalid sub in payload`, () => {
+      const invalidUser = { user_name: "user-not-existy", id: 1 };
       return supertest(app)
         .delete(`/api/comments/1`)
-        .set("Authorization", helpers.makeAuthHeader(userInvalidCreds))
+        .set("Authorization", helpers.makeAuthHeader(invalidUser))
         .expect(401, {
           error: {
             message: `Unauthorized request.`,
@@ -331,14 +318,22 @@ describe(`Comments endpoints`, function () {
         });
     });
 
-    it(`DELETE /api/comments/:id responds 401 "Unauthorized request" when invalid password`, () => {
-      const userInvalidPass = {
-        username: TestUsers[0].username,
-        password: "wrong",
-      };
+    it(`PATCH /api/comments/:id responds with 401 "Missing bearer token" when no bearer token is used`, () => {
       return supertest(app)
-        .delete(`/api/comments/1`)
-        .set("Authorization", helpers.makeAuthHeader(userInvalidPass))
+        .patch(`/api/comments/1`)
+        .expect(401, {
+          error: {
+            message: `Missing bearer token.`,
+          },
+        });
+    });
+
+    it(`PATCH /api/comments/:id responds 401 "Unauthorized request" when invalid JWT secret`, () => {
+      const validUser = TestUsers[0];
+      const invalidSecret = "bad-secret";
+      return supertest(app)
+        .patch(`/api/comments/1`)
+        .set("Authorization", helpers.makeAuthHeader(validUser, invalidSecret))
         .expect(401, {
           error: {
             message: `Unauthorized request.`,
@@ -346,48 +341,11 @@ describe(`Comments endpoints`, function () {
         });
     });
 
-    it(`PATCH /api/comments/:id responds with 401 "Missing basic token" when no basic token is used`, () => {
+    it(`PATCH /api/comments/:id responds 401 "Unauthorized request" when invalid sub in payload`, () => {
+      const invalidUser = { user_name: "user-not-existy", id: 1 };
       return supertest(app)
         .patch(`/api/comments/1`)
-        .expect(401, {
-          error: {
-            message: `Missing basic token.`,
-          },
-        });
-    });
-
-    it(`PATCH /api/comments/:id responds 401 "Unauthorized request" when no credentials in token`, () => {
-      const userNoCreds = { user_name: "", password: "" };
-      return supertest(app)
-        .patch(`/api/comments/1`)
-        .set("Authorization", helpers.makeAuthHeader(userNoCreds))
-        .expect(401, {
-          error: {
-            message: `Unauthorized request.`,
-          },
-        });
-    });
-
-    it(`PATCH /api/comments/:id responds 401 "Unauthorized request" when invalid user`, () => {
-      const userInvalidCreds = { username: "user-not", password: "exist" };
-      return supertest(app)
-        .patch(`/api/comments/1`)
-        .set("Authorization", helpers.makeAuthHeader(userInvalidCreds))
-        .expect(401, {
-          error: {
-            message: `Unauthorized request.`,
-          },
-        });
-    });
-
-    it(`PATCH /api/comments/:id responds 401 "Unauthorized request" when invalid password`, () => {
-      const userInvalidPass = {
-        username: TestUsers[0].username,
-        password: "wrong",
-      };
-      return supertest(app)
-        .patch(`/api/comments/1`)
-        .set("Authorization", helpers.makeAuthHeader(userInvalidPass))
+        .set("Authorization", helpers.makeAuthHeader(invalidUser))
         .expect(401, {
           error: {
             message: `Unauthorized request.`,
