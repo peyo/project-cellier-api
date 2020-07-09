@@ -2,11 +2,11 @@ BEGIN;
 
 INSERT INTO users (username, nickname, password)
 VALUES
-  ('petertest@gmail.com', 'peter', '@ABCabc123'),
-  ('miketest@gmail.com', 'mike', '@ABCabc123'), 
-  ('justintest@gmail.com', 'justin', '@ABCabc123'), 
-  ('christest@gmail.com', 'chris', '@ABCabc123'), 
-  ('derektest@gmail.com', 'derek', '@ABCabc123');
+  ('petertest@gmail.com', 'peter', '$2a$12$p3LbzQXwJuHH2UctCB7fl.Uqva20izJCKyuqq8YZzm88mT2kHa2cS'),
+  ('miketest@gmail.com', 'mike', '$2a$12$p3LbzQXwJuHH2UctCB7fl.Uqva20izJCKyuqq8YZzm88mT2kHa2cS'), 
+  ('justintest@gmail.com', 'justin', '$2a$12$p3LbzQXwJuHH2UctCB7fl.Uqva20izJCKyuqq8YZzm88mT2kHa2cS'), 
+  ('christest@gmail.com', 'chris', '$2a$12$p3LbzQXwJuHH2UctCB7fl.Uqva20izJCKyuqq8YZzm88mT2kHa2cS'), 
+  ('derektest@gmail.com', 'derek', '$2a$12$p3LbzQXwJuHH2UctCB7fl.Uqva20izJCKyuqq8YZzm88mT2kHa2cS');
 
 INSERT INTO groups (group_name, subgroup_name, description, triangle_a, triangle_b, linear_a, linear_b)
 VALUES

@@ -9,7 +9,7 @@ const supertest = require("supertest");
 const { expect } = require("chai");
 const helpers = require("./test-helpers/test-helpers");
 
-describe.only(`Comments endpoints`, function () {
+describe(`Comments endpoints`, function () {
   let db;
 
   before(() => {

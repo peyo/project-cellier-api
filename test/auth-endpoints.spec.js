@@ -4,12 +4,12 @@ const app = require("../src/app");
 const helpers = require("./test-helpers/test-helpers");
 const TestUsers = require("./data/test-users");
 
-describe("Auth Endpoints", function () {
+describe.only("Auth Endpoints", function () {
   let db;
 
   const testUser = TestUsers[0];
 
-  before("make knex instance", () => {
+  before(() => {
     db = knex({
       client: "pg",
       connection: process.env.TEST_DATABASE_URL,
@@ -19,9 +19,9 @@ describe("Auth Endpoints", function () {
 
   after(() => db.destroy());
 
-  before("cleanup", () => helpers.cleanTables(db));
+  before(() => helpers.cleanTables(db));
 
-  afterEach("cleanup", () => helpers.cleanTables(db));
+  afterEach(() => helpers.cleanTables(db));
 
   context(`Given "users" has data.`, () => {
     beforeEach(() => {
