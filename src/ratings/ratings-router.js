@@ -3,6 +3,7 @@ const RatingsService = require("./ratings-service");
 const RatingsRouter = express.Router();
 const jsonParser = express.json();
 const path = require("path");
+const { requireAuth } = require("../middleware/basic-auth");
 
 RatingsRouter.route("/")
   .get((req, res, next) => {
@@ -13,9 +14,9 @@ RatingsRouter.route("/")
       })
       .catch(next);
   })
-  .post(jsonParser, (req, res, next) => {
-    const { scents_id, rating, users_id, date_created } = req.body;
-    const newRating = { scents_id, rating, users_id };
+  .post(requireAuth, jsonParser, (req, res, next) => {
+    const { scents_id, rating, date_created } = req.body;
+    const newRating = { scents_id, rating };
     const knexInstance = req.app.get("db");
 
     for (const [key, value] of Object.entries(newRating))
@@ -26,6 +27,7 @@ RatingsRouter.route("/")
           },
         });
 
+    newRating.users_id = req.users_id;
     newRating.date_created = date_created;
 
     RatingsService.insertRating(knexInstance, newRating)
@@ -66,7 +68,7 @@ RatingsRouter.route("/:id")
       date_edited: res.rating.date_edited,
     });
   })
-  .patch(jsonParser, (req, res, next) => {
+  .patch(requireAuth, jsonParser, (req, res, next) => {
     const { rating, date_edited } = req.body;
     const ratingToUpdate = { rating, date_edited };
     const knexInstance = req.app.get("db");

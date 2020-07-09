@@ -3,6 +3,7 @@ const CommentsService = require("./comments-service");
 const CommentsRouter = express.Router();
 const jsonParser = express.json();
 const path = require("path");
+const { requireAuth } = require("../middleware/basic-auth");
 
 CommentsRouter.route("/")
   .get((req, res, next) => {
@@ -13,9 +14,9 @@ CommentsRouter.route("/")
       })
       .catch(next);
   })
-  .post(jsonParser, (req, res, next) => {
-    const { scents_id, comment, users_id, date_created } = req.body;
-    const newComment = { scents_id, comment, users_id };
+  .post(requireAuth, jsonParser, (req, res, next) => {
+    const { scents_id, comment, date_created } = req.body;
+    const newComment = { scents_id, comment };
     const knexInstance = req.app.get("db");
 
     for (const [key, value] of Object.entries(newComment))
@@ -25,7 +26,8 @@ CommentsRouter.route("/")
             message: `Missing "${key}" in request body.`,
           },
         });
-
+      
+    newComment.users_id = req.users.id;
     newComment.date_created = date_created;
 
     CommentsService.insertComment(knexInstance, newComment)
@@ -59,7 +61,7 @@ CommentsRouter.route("/:id")
   .get((req, res, next) => {
     res.json(CommentsService.serializeComment(res.comment));
   })
-  .delete((req, res, next) => {
+  .delete(requireAuth, (req, res, next) => {
     const knexInstance = req.app.get("db");
     CommentsService.deleteComment(knexInstance, req.params.id)
       .then((numRowsAffected) => {
@@ -67,7 +69,7 @@ CommentsRouter.route("/:id")
       })
       .catch(next);
   })
-  .patch(jsonParser, (req, res, next) => {
+  .patch(requireAuth, jsonParser, (req, res, next) => {
     const { comment, date_edited } = req.body;
     const commentToUpdate = { comment, date_edited };
     const knexInstance = req.app.get("db");
