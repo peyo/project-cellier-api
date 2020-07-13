@@ -7,8 +7,6 @@ const TestUsers = require("./data/test-users");
 describe.only("Auth Endpoints", function () {
   let db;
 
-  const testUser = TestUsers[0];
-
   before(() => {
     db = knex({
       client: "pg",
@@ -17,15 +15,40 @@ describe.only("Auth Endpoints", function () {
     app.set("db", db);
   });
 
-  after(() => db.destroy());
+  const testUser = TestUsers[0];
 
   before(() => helpers.cleanTables(db));
 
   afterEach(() => helpers.cleanTables(db));
 
+  after(() => {
+    return db.destroy();
+  });
+
   context(`Given "users" has data.`, () => {
     beforeEach(() => {
       return db.into("users").insert(TestUsers);
+    });
+
+    it(`POST /api/auth/login responds 200 and JWT auth token using secret when credentials are valid`, () => {
+      const userValidCreds = {
+        username: testUser.username,
+        password: testUser.password,
+      };
+      const expectedToken = jwt.sign(
+        { users_id: testUser.id },
+        process.env.JWT_SECRET,
+        {
+          subject: testUser.username,
+          algorithm: "HS256",
+        }
+      );
+      return supertest(app)
+        .post("/api/auth/login")
+        .send(userValidCreds)
+        .expect(200, {
+          authToken: expectedToken,
+        });
     });
 
     const requiredFields = ["username", "password"];
@@ -74,27 +97,6 @@ describe.only("Auth Endpoints", function () {
           error: {
             message: `Incorrect username or password.`,
           },
-        });
-    });
-
-    it(`POST /api/auth/login responds 200 and JWT auth token using secret when valid credentials`, () => {
-      const userValidCreds = {
-        username: testUser.username,
-        password: testUser.password,
-      };
-      const expectedToken = jwt.sign(
-        { users_id: testUser.id },
-        process.env.JWT_SECRET,
-        {
-          subject: testUser.username,
-          algorithm: "HS256",
-        }
-      );
-      return supertest(app)
-        .post("/api/auth/login")
-        .send(userValidCreds)
-        .expect(200, {
-          authToken: expectedToken,
         });
     });
   });

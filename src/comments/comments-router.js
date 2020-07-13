@@ -15,7 +15,7 @@ CommentsRouter.route("/")
       .catch(next);
   })
   .post(requireAuth, jsonParser, (req, res, next) => {
-    const { scents_id, comment } = req.body;
+    const { scents_id, comment, date_created } = req.body;
     const newComment = { scents_id, comment };
     const knexInstance = req.app.get("db");
 

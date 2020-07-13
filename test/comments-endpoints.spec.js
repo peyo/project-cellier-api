@@ -61,7 +61,7 @@ describe(`Comments endpoints`, function () {
         .expect(200, JSON.stringify(expected));
     });
 
-    it(`POST /api/comments responds 401 'Unauthorized request' when invalid password`, () => {
+    it(`POST /api/comments responds 401 "Unauthorized request" when invalid password`, () => {
       const userInvalidPass = {
         username: TestUsers[0].username,
         password: "wrong",
@@ -80,6 +80,7 @@ describe(`Comments endpoints`, function () {
     it(`POST /api/comments creates a comment, responding with 201 and the new comment`, () => {
       this.retries(3);
       const newComment = {
+        id: 3,
         scents_id: 1,
         comment: "Enriching...",
         date_created: new Date(),
@@ -92,6 +93,7 @@ describe(`Comments endpoints`, function () {
         .send(newComment)
         .expect(201)
         .expect((res) => {
+          expect(res.body.id).to.eql(newComment.id);
           expect(res.body.scents_id).to.eql(newComment.scents_id);
           expect(res.body.comment).to.eql(newComment.comment);
           expect(res.body.users_id).to.eql(TestUser.users_id);
@@ -110,6 +112,7 @@ describe(`Comments endpoints`, function () {
             .where({ id: res.body.id })
             .first()
             .then((row) => {
+              expect(row.id).to.eql(newComment.id);
               expect(row.scents_id).to.eql(newComment.scents_id);
               expect(row.comment).to.eql(newComment.comment);
               expect(row.users_id).to.eql(TestUser.users_id);
@@ -272,7 +275,7 @@ describe(`Comments endpoints`, function () {
     });
 
     it(`POST /api/comments responds 401 "Unauthorized request" when invalid sub in payload`, () => {
-      const invalidUser = { user_name: "user-not-existy", id: 1 };
+      const invalidUser = { username: "user-not-existy", id: 1 };
       return supertest(app)
         .post(`/api/comments`)
         .set("Authorization", helpers.makeAuthHeader(invalidUser))
@@ -307,7 +310,7 @@ describe(`Comments endpoints`, function () {
     });
 
     it(`DELETE /api/comments/:id responds 401 "Unauthorized request" when invalid sub in payload`, () => {
-      const invalidUser = { user_name: "user-not-existy", id: 1 };
+      const invalidUser = { username: "user-not-existy", id: 1 };
       return supertest(app)
         .delete(`/api/comments/1`)
         .set("Authorization", helpers.makeAuthHeader(invalidUser))
@@ -342,7 +345,7 @@ describe(`Comments endpoints`, function () {
     });
 
     it(`PATCH /api/comments/:id responds 401 "Unauthorized request" when invalid sub in payload`, () => {
-      const invalidUser = { user_name: "user-not-existy", id: 1 };
+      const invalidUser = { username: "user-not-existy", id: 1 };
       return supertest(app)
         .patch(`/api/comments/1`)
         .set("Authorization", helpers.makeAuthHeader(invalidUser))

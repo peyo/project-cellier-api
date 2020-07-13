@@ -69,11 +69,11 @@ RatingsRouter.route("/:id")
     });
   })
   .patch(requireAuth, jsonParser, (req, res, next) => {
-    const { rating, date_edited } = req.body;
-    const ratingToUpdate = { rating, date_edited };
+    const { rating } = req.body;
+    const newRating = { rating };
     const knexInstance = req.app.get("db");
 
-    const numberOfValues = Object.values(ratingToUpdate).filter(Boolean).length;
+    const numberOfValues = Object.values(newRating).filter(Boolean).length;
     if (numberOfValues === 0) {
       return res.status(400).json({
         error: {
@@ -84,7 +84,7 @@ RatingsRouter.route("/:id")
 
     newRating.users_id = req.users.id;
 
-    RatingsService.updateRating(knexInstance, req.params.id, ratingToUpdate)
+    RatingsService.updateRating(knexInstance, req.params.id, newRating)
       .then(() => {
         res.status(204).end();
       })

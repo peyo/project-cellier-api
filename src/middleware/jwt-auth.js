@@ -35,7 +35,9 @@ function requireAuth(req, res, next) {
       });
   } catch (error) {
     res.status(401).json({
-      error: { message: "Unauthorized request." },
+      error: {
+        message: "Unauthorized request.",
+      },
     });
   }
 }

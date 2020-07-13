@@ -4,7 +4,9 @@ const AuthService = require("./auth-service");
 const AuthRouter = express.Router();
 const jsonBodyParser = express.json();
 
-AuthRouter.post("/login", jsonBodyParser, (req, res, next) => {
+AuthRouter
+  .post("/login", jsonBodyParser, (req, res, next) => {
+  const knexInstance = req.app.get("db");
   const { username, password } = req.body;
   const loginUser = { username, password };
 
@@ -16,7 +18,7 @@ AuthRouter.post("/login", jsonBodyParser, (req, res, next) => {
         },
       });
 
-  AuthService.getUserWithUserName(req.app.get("db"), loginUser.username)
+  AuthService.getUserWithUserName(knexInstance, loginUser.username)
     .then((dbUser) => {
       if (!dbUser)
         return res.status(400).json({

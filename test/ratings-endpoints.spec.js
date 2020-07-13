@@ -135,8 +135,6 @@ describe(`Ratings endpoints`, function () {
       const id = 2;
       const updatedRating = {
         rating: 1,
-        date_created: "2029-01-22T16:28:32.615Z",
-        date_edited: "2029-01-22T16:28:32.615Z",
       };
       const expected = {
         ...TestRatings[id - 1],
@@ -236,7 +234,7 @@ describe(`Ratings endpoints`, function () {
     });
 
     it(`POST /api/ratings responds 401 "Unauthorized request" when invalid sub in payload`, () => {
-      const invalidUser = { user_name: "user-not-existy", id: 1 };
+      const invalidUser = { username: "user-not-existy", id: 1 };
       return supertest(app)
         .post(`/api/ratings`)
         .set("Authorization", helpers.makeAuthHeader(invalidUser))
@@ -271,7 +269,7 @@ describe(`Ratings endpoints`, function () {
     });
 
     it(`PATCH /api/ratings/:id responds 401 "Unauthorized request" when invalid sub in payload`, () => {
-      const invalidUser = { user_name: "user-not-existy", id: 1 };
+      const invalidUser = { username: "user-not-existy", id: 1 };
       return supertest(app)
         .patch(`/api/ratings/1`)
         .set("Authorization", helpers.makeAuthHeader(invalidUser))
