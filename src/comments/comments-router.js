@@ -3,6 +3,7 @@ const CommentsService = require("./comments-service");
 const CommentsRouter = express.Router();
 const jsonParser = express.json();
 const path = require("path");
+const jwt = require("jsonwebtoken");
 const { requireAuth } = require("../middleware/jwt-auth");
 
 CommentsRouter.route("/")
@@ -20,13 +21,14 @@ CommentsRouter.route("/")
     const knexInstance = req.app.get("db");
 
     for (const [key, value] of Object.entries(newComment))
-      if (value == null)
+      if (value == null) {
         return res.status(400).json({
           error: {
             message: `Missing "${key}" in request body.`,
           },
         });
-    
+      }
+
     newComment.users_id = req.users.id;
     newComment.date_created = date_created;
 
@@ -61,21 +63,38 @@ CommentsRouter.route("/:id")
   .get((req, res, next) => {
     res.json(CommentsService.serializeComment(res.comment));
   })
-  .delete(requireAuth, (req, res, next) => {
+  .delete(requireAuth, async (req, res, next) => {
     const knexInstance = req.app.get("db");
+    const comment = await CommentsService.getById(knexInstance, req.params.id);
+
+    if (comment === undefined) {
+      return res.status(404).json({
+        error: {
+          message: `Comment doesn't exist.`
+        },
+      });
+    }
+
+    if (comment.users_id !== req.users.id) {
+      return res.status(401).json({
+        error: {
+          message: `You can only delete your own comments.`
+        },
+      });
+    }
+
     CommentsService.deleteComment(knexInstance, req.params.id)
       .then((numRowsAffected) => {
         res.status(204).end();
       })
       .catch(next);
   })
-  .patch(requireAuth, jsonParser, (req, res, next) => {
+  .patch(requireAuth, jsonParser, async (req, res, next) => {
     const { comment, date_edited } = req.body;
-    const commentToUpdate = { comment, date_edited };
+    const updatedComment = { comment };
     const knexInstance = req.app.get("db");
 
-    const numberOfValues = Object.values(commentToUpdate).filter(Boolean)
-      .length;
+    const numberOfValues = Object.values(updatedComment).filter(Boolean).length;
     if (numberOfValues === 0) {
       return res.status(400).json({
         error: {
@@ -84,7 +103,26 @@ CommentsRouter.route("/:id")
       });
     }
 
-    CommentsService.updateComment(knexInstance, req.params.id, commentToUpdate)
+    const checkComment = await CommentsService.getById(knexInstance, req.params.id);
+
+    if (checkComment === undefined) {
+      return res.status(404).json({
+        error: {
+          message: `Comment doesn't exist.`
+        },
+      });
+    }
+
+    if (checkComment.users_id !== req.users.id) {
+      return res.status(401).json({
+        error: {
+          message: `You can only edit your own comments.`
+        },
+      });
+    }
+
+    updatedComment.date_edited = date_edited;
+    CommentsService.updateComment(knexInstance, req.params.id, updatedComment)
       .then(() => {
         res.status(204).end();
       })

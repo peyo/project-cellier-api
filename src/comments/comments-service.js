@@ -32,10 +32,14 @@ const CommentsService = {
       });
   },
   deleteComment(db, id) {
-    return db("comments").where({ id }).delete();
+    return db("comments")
+      .where({ id })
+      .delete();
   },
   updateComment(db, id, newComment) {
-    return db("comments").where({ id }).update(newComment);
+    return db("comments")
+      .where({ id })
+      .update(newComment);
   },
   serializeComment(comment) {
     return {

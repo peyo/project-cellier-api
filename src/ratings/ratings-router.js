@@ -68,7 +68,7 @@ RatingsRouter.route("/:id")
       date_edited: res.rating.date_edited,
     });
   })
-  .patch(requireAuth, jsonParser, (req, res, next) => {
+  .patch(requireAuth, jsonParser, async (req, res, next) => {
     const { rating } = req.body;
     const newRating = { rating };
     const knexInstance = req.app.get("db");
@@ -78,6 +78,24 @@ RatingsRouter.route("/:id")
       return res.status(400).json({
         error: {
           message: `Request body must contain rating.`,
+        },
+      });
+    }
+
+    const checkRating = await RatingsService.getById(knexInstance, req.params.id);
+
+    if (checkRating === undefined) {
+      return res.status(404).json({
+        error: {
+          message: `Comment doesn't exist.`
+        },
+      });
+    }
+
+    if (checkRating.users_id !== req.users.id) {
+      return res.status(401).json({
+        error: {
+          message: `You can only delete your own comments.`
         },
       });
     }
