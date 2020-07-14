@@ -95,7 +95,7 @@ RatingsRouter.route("/:id")
     if (checkRating.users_id !== req.users.id) {
       return res.status(401).json({
         error: {
-          message: `You can only delete your own comments.`
+          message: `You can only edit your own rated items.`
         },
       });
     }
